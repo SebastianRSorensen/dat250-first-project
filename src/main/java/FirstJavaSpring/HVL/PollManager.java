@@ -1,5 +1,6 @@
 package FirstJavaSpring.HVL;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.stereotype.Component;
@@ -20,12 +21,20 @@ public class PollManager {
     return users.get(id);
   }
 
+  public Map<Integer, User> getAllUsers() {
+    return users;
+  }
+
   public void addPoll(Integer id, Poll poll) {
     polls.put(id, poll);
   }
 
   public Poll getPoll(Integer id) {
     return polls.get(id);
+  }
+
+  public Collection<Poll> getAllPolls() {
+    return polls.values();
   }
 
   public void addVoteOption(Integer id, VoteOption voteOption) {
@@ -36,11 +45,27 @@ public class PollManager {
     return voteOptions.get(id);
   }
 
+  public Collection<VoteOption> getAllVoteOptions() {
+    return voteOptions.values();
+  }
+
   public void addVote(Integer id, Vote vote) {
     votes.put(id, vote);
   }
 
   public Vote getVote(Integer id) {
     return votes.get(id);
+  }
+
+  public Collection<Vote> getAllVotes() {
+    return votes.values();
+  }
+
+  public boolean removeVote(Integer id) {
+    if (votes.containsKey(id)) {
+      votes.remove(id);
+      return true;
+    }
+    return false;
   }
 }
