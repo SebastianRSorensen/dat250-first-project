@@ -25,7 +25,7 @@ public class VoteController {
   // Endpoint to update a vote
   @PutMapping("/{id}")
   public ResponseEntity<?> updateVote(
-    @PathVariable int id,
+    @PathVariable("id") int id,
     @RequestBody Vote updatedVote
   ) {
     Vote existingVote = pollManager.getVote(id);

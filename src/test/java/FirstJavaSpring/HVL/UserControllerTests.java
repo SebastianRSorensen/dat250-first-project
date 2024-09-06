@@ -1,9 +1,13 @@
 package FirstJavaSpring.HVL;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
 
+import FirstJavaSpring.HVL.PollManager;
+import FirstJavaSpring.HVL.User;
+import FirstJavaSpring.HVL.UserController;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +57,7 @@ public class UserControllerTests {
     // Test listing all users
     mockMvc
       .perform(get("/users"))
+      .andDo(print())
       .andExpect(status().isOk())
       .andExpect(jsonPath("$[0].username").value("jane"));
 
@@ -64,27 +69,5 @@ public class UserControllerTests {
           .content("{\"username\":\"vilde\", \"email\":\"vilde@example.com\"}")
       )
       .andExpect(status().isCreated());
-  }
-
-  @Test
-  void testPollAndVoteScenarios() throws Exception {
-    // User 1 creates a new poll
-    mockMvc
-      .perform(
-        post("/polls")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content("{\"question\":\"What's your favorite color?\"}")
-      )
-      .andExpect(status().isCreated());
-
-    // List polls
-    mockMvc
-      .perform(get("/polls"))
-      .andExpect(status().isOk())
-      .andExpect(
-        jsonPath("$[0].question").value("What's your favorite color?")
-      );
-    // User 2 votes on the poll
-    // Add other test cases following the similar structure
   }
 }

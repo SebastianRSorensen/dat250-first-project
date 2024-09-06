@@ -10,10 +10,23 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultHandler;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 public class PollAppIntegrationTests {
+
+  public static ResultHandler printCustom() {
+    return result -> {
+      System.out.println("Custom print statement:");
+      System.out.println("Status: " + result.getResponse().getStatus());
+      System.out.println(
+        "Content: " + result.getResponse().getContentAsString()
+      );
+      // Add more details as required
+    };
+  }
 
   @Autowired
   private MockMvc mockMvc;
@@ -34,7 +47,8 @@ public class PollAppIntegrationTests {
       .perform(get("/users"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.length()").value(1))
-      .andExpect(jsonPath("$[0].username").value("john"));
+      .andExpect(jsonPath("$[0].username").value("john"))
+      .andDo(printCustom());
 
     // Create another user
     mockMvc
@@ -58,11 +72,32 @@ public class PollAppIntegrationTests {
           .contentType(MediaType.APPLICATION_JSON)
           .content("{\"question\":\"What's your favorite color?\"}")
       )
+      .andDo(printCustom())
       .andExpect(status().isCreated());
+
+    // Add vote options to the newly created poll
+    String[] colors = { "Red", "Blue" };
+    for (int i = 0; i < colors.length; i++) {
+      mockMvc
+        .perform(
+          post("/voteOptions")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(
+              "{\"caption\":\"" +
+              colors[i] +
+              "\", \"presentationOrder\":" +
+              (i + 1) +
+              "}"
+            )
+        )
+        .andDo(printCustom())
+        .andExpect(status().isCreated());
+    }
 
     // List polls (-> shows the new poll)
     mockMvc
       .perform(get("/polls"))
+      .andDo(printCustom())
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.length()").value(1))
       .andExpect(
@@ -76,6 +111,7 @@ public class PollAppIntegrationTests {
           .contentType(MediaType.APPLICATION_JSON)
           .content("{\"pollId\":1, \"optionId\":1, \"userId\":2}")
       )
+      .andDo(printCustom())
       .andExpect(status().isCreated());
 
     // User 2 changes his vote

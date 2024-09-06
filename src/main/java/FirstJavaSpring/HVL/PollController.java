@@ -8,15 +8,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/polls")
 public class PollController {
 
   @Autowired
   private PollManager pollManager;
 
-  @PostMapping("/polls")
+  @PostMapping
   public ResponseEntity<String> createPoll(@RequestBody Poll poll) {
     int id = poll.hashCode();
     pollManager.addPoll(id, poll);
@@ -25,12 +27,12 @@ public class PollController {
       .body("Poll created with ID: " + id);
   }
 
-  @GetMapping("/polls/{id}")
+  @GetMapping("/{id}")
   public Poll getPoll(@PathVariable int id) {
     return pollManager.getPoll(id);
   }
 
-  @GetMapping("/polls")
+  @GetMapping
   public Collection<Poll> getAllPolls() {
     return pollManager.getAllPolls();
   }
