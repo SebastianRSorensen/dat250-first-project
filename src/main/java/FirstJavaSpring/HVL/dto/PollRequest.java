@@ -7,7 +7,7 @@ public class PollRequest {
 
   private String question;
   private Set<VoteOption> options;
-  private User creator;
+  private String creator;
 
   // Getters and setters
   public String getQuestion() {
@@ -26,11 +26,11 @@ public class PollRequest {
     this.options = options;
   }
 
-  public User getCreator() {
+  public String getCreator() {
     return creator;
   }
 
-  public void setCreator(User creator) {
+  public void setCreator(String creator) {
     this.creator = creator;
   }
 }

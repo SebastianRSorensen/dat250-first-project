@@ -1,14 +1,16 @@
 package FirstJavaSpring.HVL;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import FirstJavaSpring.HVL.old.PollOld;
-import FirstJavaSpring.HVL.old.User;
-import FirstJavaSpring.HVL.old.Vote;
-import FirstJavaSpring.HVL.old.VoteOption;
-import java.time.Instant;
-import java.util.UUID;
+import FirstJavaSpring.HVL.Polls.Poll;
+import FirstJavaSpring.HVL.Polls.User;
+import FirstJavaSpring.HVL.Polls.Vote;
+import FirstJavaSpring.HVL.Polls.VoteOption;
+import FirstJavaSpring.HVL.dto.PollRequest;
+import FirstJavaSpring.HVL.dto.UserRequest;
+import FirstJavaSpring.HVL.dto.VoteRequest;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,15 +37,13 @@ public class PollAppIntegrationTest {
   @Test
   public void testCompleteScenario() {
     // Create a new user
-    User user1 = new User();
-    user1.setUsername("user1");
-    user1.setEmail("user1@example.com");
+    User user1 = new User("seb", "seb@example.com");
     ResponseEntity<User> user1Response = restTemplate.postForEntity(
       baseUrl() + "/users",
       user1,
       User.class
     );
-    assertEquals(HttpStatus.OK, user1Response.getStatusCode());
+    assertEquals(HttpStatus.CREATED, user1Response.getStatusCode());
 
     // List all users (should show the newly created user)
     ResponseEntity<User[]> usersResponse = restTemplate.getForEntity(
@@ -54,74 +54,66 @@ public class PollAppIntegrationTest {
 
     // Create another user
     User user2 = new User();
-    user2.setUsername("user2");
-    user2.setEmail("user2@example.com");
+    user2.setUsername("Vilde");
+    user2.setEmail("vil@example.com");
     ResponseEntity<User> user2Response = restTemplate.postForEntity(
       baseUrl() + "/users",
       user2,
       User.class
     );
-    assertEquals(HttpStatus.OK, user2Response.getStatusCode());
+    assertEquals(HttpStatus.CREATED, user2Response.getStatusCode());
 
     // List all users again (should show two users)
     usersResponse =
       restTemplate.getForEntity(baseUrl() + "/users", User[].class);
     assertEquals(2, usersResponse.getBody().length);
 
-    System.out.println(usersResponse.getBody());
+    // User 1 creates a new poll using PollRequest
+    PollRequest pollRequest = new PollRequest();
+    pollRequest.setCreator(user1.getUsername());
+    pollRequest.setQuestion("What is your favorite color?");
+    Set<VoteOption> options = new HashSet<>();
+    VoteOption option1 = new VoteOption(1, "Red");
+    options.add(option1);
+    VoteOption option2 = new VoteOption(2, "Blue");
+    options.add(option2);
+    pollRequest.setOptions(options);
 
-    // User 1 creates a new poll
-    PollOld poll = new PollOld();
-    poll.setQuestion("What is your favorite color?");
-    poll.setPublishedAt(Instant.now());
-    poll.setValidUntil(Instant.now().plusSeconds(86400)); // valid for 1 day
-    VoteOption option1 = new VoteOption();
-    option1.setCaption("Red");
-    option1.setPresentationOrder(1);
-    poll.getVoteOptions().add(option1);
-    VoteOption option2 = new VoteOption();
-    option1.setCaption("Blue");
-    option1.setPresentationOrder(1);
-    poll.getVoteOptions().add(option2);
-    ResponseEntity<PollOld> pollResponse = restTemplate.postForEntity(
+    ResponseEntity<Poll> pollResponse = restTemplate.postForEntity(
       baseUrl() + "/polls",
-      poll,
-      PollOld.class
+      pollRequest,
+      Poll.class
     );
-    assertEquals(HttpStatus.OK, pollResponse.getStatusCode());
+    assertEquals(HttpStatus.CREATED, pollResponse.getStatusCode());
+    Poll poll = pollResponse.getBody();
 
     // List polls (should show the new poll)
-    ResponseEntity<PollOld[]> pollsResponse = restTemplate.getForEntity(
+    ResponseEntity<Poll[]> pollsResponse = restTemplate.getForEntity(
       baseUrl() + "/polls",
-      PollOld[].class
+      Poll[].class
     );
     assertEquals(1, pollsResponse.getBody().length);
 
-    System.out.println("Listing polls: ");
-    for (PollOld p : pollsResponse.getBody()) {
-      System.out.println("Questions" + p.getQuestion());
-      System.out.println("Options" + p.getVoteOptions());
-    }
-    // User 2 votes on the poll
-    Vote vote = new Vote();
-    vote.setPublishedAt(Instant.now());
-    vote.setVoteOption(pollResponse.getBody().getVoteOptions().get(0));
-    ResponseEntity<Vote> voteResponse = restTemplate.postForEntity(
-      baseUrl() + "/votes",
-      vote,
-      Vote.class
+    // User 2 casts a vote
+    VoteRequest voteRequest = new VoteRequest();
+    voteRequest.setUsername(user2.getUsername());
+    voteRequest.setSelectedOption(option2);
+
+    ResponseEntity<String> voteResponse = restTemplate.postForEntity(
+      baseUrl() + "/polls/" + poll.getPollId(),
+      voteRequest,
+      String.class
     );
     assertEquals(HttpStatus.OK, voteResponse.getStatusCode());
 
-    // User 2 changes his vote
-    vote.setVoteOption(pollResponse.getBody().getVoteOptions().get(1)); // change to another option
-    ResponseEntity<Vote> updatedVoteResponse = restTemplate.exchange(
-      baseUrl() + "/votes/" + UUID.randomUUID().toString(),
-      HttpMethod.PUT,
-      new HttpEntity<>(vote),
-      Vote.class
+    // User 2 changes the vote
+    voteRequest.setSelectedOption(option1); // Change the vote to option "Red"
+    ResponseEntity<String> voteChangeResponse = restTemplate.postForEntity(
+      baseUrl() + "/polls/" + poll.getPollId(),
+      voteRequest,
+      String.class
     );
-    assertEquals(HttpStatus.OK, updatedVoteResponse.getStatusCode());
+    assertEquals(HttpStatus.OK, voteChangeResponse.getStatusCode());
 
     // List votes (should show the most recent vote for User 2)
     ResponseEntity<Vote[]> votesResponse = restTemplate.getForEntity(
@@ -130,14 +122,21 @@ public class PollAppIntegrationTest {
     );
     assertEquals(1, votesResponse.getBody().length); // Ensure the vote count is consistent
 
-    // Delete the one poll
-    restTemplate.delete(
-      baseUrl() + "/polls/" + pollResponse.getBody().getQuestion()
+    // Delete the poll with User 1 (creator)
+    UserRequest deleteRequestUser1 = new UserRequest(user1.getUsername());
+    ResponseEntity<String> deleteResponse = restTemplate.exchange(
+      baseUrl() + "/polls/" + poll.getPollId(),
+      HttpMethod.DELETE,
+      new HttpEntity<>(deleteRequestUser1),
+      String.class
     );
+    assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
 
-    // List votes (should be empty)
-    votesResponse =
-      restTemplate.getForEntity(baseUrl() + "/votes", Vote[].class);
-    assertTrue(votesResponse.getBody().length == 0);
+    // // List votes (should be empty)
+    ResponseEntity<Poll[]> pollsResponseEmpty = restTemplate.getForEntity(
+      baseUrl() + "/polls",
+      Poll[].class
+    );
+    assertEquals(0, pollsResponseEmpty.getBody().length);
   }
 }

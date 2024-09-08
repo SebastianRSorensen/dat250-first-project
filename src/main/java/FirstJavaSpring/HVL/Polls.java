@@ -1,32 +1,41 @@
 package FirstJavaSpring.HVL;
 
+import FirstJavaSpring.HVL.Polls.Vote;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.google.common.collect.Lists;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Polls {
 
+  @JsonIdentityInfo(
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "username"
+  )
   public static class User {
 
     private String username;
     private String email;
 
-    @JsonManagedReference("poll-user") // User manages the relationship with Poll
-    private List<Poll> createdPolls;
-
-    @JsonManagedReference("vote-user") // User manages the relationship with Vote
-    private List<Vote> castVotes;
+    @JsonIgnore // Prevents the map from being serialized/deserialized
+    private final Map<Long, Poll> polls = new HashMap<>();
 
     public User() {}
 
     public User(String username, String email) {
       this.username = username;
       this.email = email;
-      this.createdPolls = Lists.newArrayList();
-      this.castVotes = Lists.newArrayList();
     }
 
     public String getUsername() {
@@ -45,47 +54,74 @@ public class Polls {
       this.email = email;
     }
 
-    public List<Poll> getCreatedPolls() {
-      return createdPolls;
+    // expose polls when needed
+    @JsonProperty("polls")
+    public List<Poll> getPolls() {
+      return Lists.newArrayList(polls.values());
     }
 
-    public void setCreatedPolls(List<Poll> createdPolls) {
-      this.createdPolls = createdPolls;
-    }
-
-    // Getter and setter for cast votes
-    public List<Vote> getCastVotes() {
-      return castVotes;
-    }
-
-    public void setCastVotes(List<Vote> castVotes) {
-      this.castVotes = castVotes;
-    }
-
-    public void addVote(Vote vote) {
-      this.castVotes.add(vote);
+    public void addPoll(Poll poll) {
+      this.polls.put(poll.getPollId(), poll);
     }
   }
 
+  @JsonIdentityInfo(
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "pollId"
+  )
   public static class Poll {
 
+    private static final AtomicLong counter = new AtomicLong();
+
+    private long pollId;
     private String question;
     private Set<VoteOption> options;
 
-    @JsonBackReference("poll-user") // Poll is the child and refers back to User
+    @JsonIdentityReference(alwaysAsId = true) // Only serialize the username, not full User object
     private User creator;
 
-    @JsonManagedReference("poll-vote") // Poll manages the relationship with Vote
-    private List<Vote> votes;
+    @JsonManagedReference // Manage votes reference in Poll
+    private Map<String, Vote> votes = new HashMap<>();
 
+    private final Instant createdAt = Instant.now();
     private Instant closesAt;
 
+    // Default constructor (required for deserialization)
+    public Poll() {
+      this.pollId = counter.incrementAndGet();
+      this.options = new HashSet<>();
+      this.closesAt = Instant.now().plusSeconds(60 * 60 * 24); // Default to 24 hours
+    }
+
     public Poll(String question, Set<VoteOption> options, User creator) {
+      this.pollId = counter.incrementAndGet();
       this.question = question;
-      this.options = options;
+      this.options = (options != null) ? options : new HashSet<>();
       this.creator = creator;
-      this.votes = Lists.newArrayList();
-      //creator.getCreatedPolls().add(this);  // this line is dangerous...
+      this.closesAt = Instant.now().plusSeconds(60 * 60 * 24); // Default to 24 hours
+    }
+
+    // Overloaded constructor to set a custom closing time
+    // TODO: Implement the functionality to set a custom closing time
+    public Poll(
+      String question,
+      Set<VoteOption> options,
+      User creator,
+      Instant closesAt
+    ) {
+      this.pollId = counter.incrementAndGet();
+      this.question = question;
+      this.options = (options != null) ? options : new HashSet<>();
+      this.creator = creator;
+      this.closesAt = closesAt;
+    }
+
+    public Instant getCreatedAt() {
+      return createdAt;
+    }
+
+    public long getPollId() {
+      return pollId;
     }
 
     public Instant getClosesAt() {
@@ -112,6 +148,10 @@ public class Polls {
       this.options = options;
     }
 
+    public void addOption(VoteOption option) {
+      this.options.add(option);
+    }
+
     public User getCreator() {
       return creator;
     }
@@ -120,35 +160,40 @@ public class Polls {
       this.creator = creator;
     }
 
-    // Getter and setter for votes
-    public List<Vote> getVotes() {
+    // Refactored: Getter and setter for votes
+    public Map<String, Vote> getVotes() {
       return votes;
     }
 
-    public void addVote(Vote vote) {
-      this.votes.add(vote);
+    // Add or update a vote in the map (vote cast or changed)
+    public void addVote(String voter, Vote vote) {
+      this.votes.put(voter, vote);
+    }
+
+    public boolean hasVoted(String voter) {
+      return this.votes.containsKey(voter); // Check if the user has already voted
     }
   }
 
   public static class VoteOption {
 
-    private int order;
+    private int presentationOrder;
 
     private String caption;
 
-    public VoteOption(int order, String caption) {
-      this.order = order;
+    public VoteOption(int presentationOrder, String caption) {
+      this.presentationOrder = presentationOrder;
       this.caption = caption;
     }
 
     public VoteOption() {}
 
-    public int getOrder() {
-      return order;
+    public int getPresentationOrder() {
+      return presentationOrder;
     }
 
-    public void setOrder(int order) {
-      this.order = order;
+    public void setPresentationOrder(int presentationOrder) {
+      this.presentationOrder = presentationOrder;
     }
 
     public String getCaption() {
@@ -162,27 +207,29 @@ public class Polls {
 
   public static class Vote {
 
-    @JsonBackReference("vote-user") // Vote is the child and refers back to User
-    private User voter;
+    private String voter;
 
-    @JsonBackReference("poll-vote") // Vote is the child and refers back to Poll
+    @JsonBackReference // Prevent infinite recursion between Poll and Vote
     private Poll poll;
 
     private VoteOption selectedOption;
     private Instant voteTime;
 
-    public Vote(User voter, Poll poll, VoteOption selectedOption) {
+    // Default constructor (required for deserialization)
+    public Vote() {}
+
+    public Vote(String voter, Poll poll, VoteOption selectedOption) {
       this.voter = voter;
       this.poll = poll;
       this.selectedOption = selectedOption;
       this.voteTime = Instant.now(); // Record the time the vote was cast
     }
 
-    public User getVoter() {
+    public String getVoter() {
       return voter;
     }
 
-    public void setVoter(User voter) {
+    public void setVoter(String voter) {
       this.voter = voter;
     }
 
@@ -208,15 +255,6 @@ public class Polls {
 
     public void setVoteTime(Instant voteTime) {
       this.voteTime = voteTime;
-    }
-
-    public void castVote(User voter, Poll poll, VoteOption selectedOption) {
-      // Create a new vote
-      Vote vote = new Vote(voter, poll, selectedOption);
-
-      // Add the vote to the poll and the user
-      poll.addVote(vote);
-      voter.addVote(vote);
     }
   }
 }

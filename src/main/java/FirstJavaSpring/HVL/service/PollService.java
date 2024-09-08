@@ -1,44 +1,44 @@
 package FirstJavaSpring.HVL.service;
 
+import FirstJavaSpring.HVL.PollManager;
 import FirstJavaSpring.HVL.Polls.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PollService {
 
-  private List<Poll> polls = new ArrayList<>();
+  @Autowired
+  private PollManager pollManager;
 
-  // Method to add a poll to the list
+  // Add a poll
   public void addPoll(Poll poll) {
-    polls.add(poll);
+    pollManager.addPoll(poll);
   }
 
-  // Method to retrieve all polls
+  // Retrieve all polls
   public List<Poll> getAllPolls() {
-    return polls;
+    return pollManager
+      .getAllPolls()
+      .values()
+      .stream()
+      .collect(Collectors.toList());
   }
 
-  public void castVote(User voter, Poll poll, VoteOption selectedOption) {
-    // Check if the user has already voted in the poll
-    Vote existingVote = null;
-    for (Vote vote : poll.getVotes()) {
-      if (vote.getVoter().equals(voter)) {
-        existingVote = vote;
-        break;
-      }
-    }
+  // Find poll by ID
+  public Poll findPollById(Long pollId) {
+    return pollManager.getPollById(pollId);
+  }
 
-    // Remove existing vote if found
-    if (existingVote != null) {
-      poll.getVotes().remove(existingVote);
-      voter.getCastVotes().remove(existingVote);
-    }
+  public void castVote(String userName, Poll poll, VoteOption selectedOption) {
+    Vote vote = new Vote(userName, poll, selectedOption);
+    poll.addVote(userName, vote);
+  }
 
-    // Create a new vote and add it
-    Vote newVote = new Vote(voter, poll, selectedOption);
-    poll.addVote(newVote);
-    voter.addVote(newVote);
+  // Delete a poll
+  public void deletePoll(Long pollId) {
+    pollManager.getAllPolls().remove(pollId);
   }
 }
