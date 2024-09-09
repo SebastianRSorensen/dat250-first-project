@@ -1,0 +1,23 @@
+meta {
+  name: Create poll
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/polls
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "question": "What's your favorite programming language?",
+    "options": [
+      { "presentationOrder": 1, "caption": "Java" },
+      { "presentationOrder": 2, "caption": "Python" }
+    ],
+    "creator":"Vilde"
+  }
+  
+}

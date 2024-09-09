@@ -1,0 +1,21 @@
+meta {
+  name: Cast vote
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:8080/polls/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "Vilde",
+    "selectedOption": {
+      "presentationOrder": 1,
+      "caption": "Java"
+    }
+  }
+}
