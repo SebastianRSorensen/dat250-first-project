@@ -1,12 +1,14 @@
+import { CreatePoll } from "./components/create-poll";
 import { CreateUser } from "./components/create-user";
+import { PageWrapper } from "./components/page-wrapper";
+import { Poll } from "./components/poll";
 
-function App() {
+export function App() {
   return (
-    <>
-      <div className="border-2">hei</div>
+    <PageWrapper>
       <CreateUser />
-    </>
+      <CreatePoll />
+      <Poll />
+    </PageWrapper>
   );
 }
-
-export default App;
