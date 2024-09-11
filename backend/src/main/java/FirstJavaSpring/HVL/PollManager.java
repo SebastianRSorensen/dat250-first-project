@@ -13,21 +13,31 @@ import org.springframework.stereotype.Component;
 public class PollManager {
 
   private final Map<String, User> users = new HashMap<>();
-  private final Map<Long, Poll> polls = new HashMap<>();
+  private final Map<String, Poll> polls = new HashMap<>();
+  private final Map<String, String> usernameToIdMap = new HashMap<>();
 
   // Add a user to the manager
   public boolean addUser(User user) {
+    String id = user.getId();
     String username = user.getUsername();
-    if (users.containsKey(username)) {
+    if (users.containsKey(id)) {
       return false; // User already exists
     }
-    users.put(username, user);
+    if (usernameToIdMap.containsKey(username)) {
+      return false;
+    }
+    users.put(id, user);
+    usernameToIdMap.put(username, id);
     return true;
   }
 
   // Retrieve a user by username
   public User getUser(String username) {
     return users.get(username);
+  }
+
+  public User getUserById(String id) {
+    return users.get(id);
   }
 
   // Retrieve all users
@@ -41,12 +51,12 @@ public class PollManager {
   }
 
   // Retrieve a poll by ID
-  public Poll getPollById(Long pollId) {
+  public Poll getPollById(String pollId) {
     return polls.get(pollId);
   }
 
   // Retrieve all polls
-  public Map<Long, Poll> getAllPolls() {
+  public Map<String, Poll> getAllPolls() {
     return polls;
   }
 
@@ -59,7 +69,7 @@ public class PollManager {
   }
 
   // Remove a poll by ID
-  public void removePoll(Long pollId) {
+  public void removePoll(String pollId) {
     polls.remove(pollId);
   }
 }

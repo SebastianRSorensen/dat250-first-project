@@ -28,17 +28,17 @@ public class PollService {
   }
 
   // Find poll by ID
-  public Poll findPollById(Long pollId) {
+  public Poll findPollById(String pollId) {
     return pollManager.getPollById(pollId);
   }
 
-  public void castVote(String userName, Poll poll, VoteOption selectedOption) {
-    Vote vote = new Vote(userName, poll, selectedOption);
-    poll.addVote(userName, vote);
+  public void castVote(String userId, Poll poll, VoteOption selectedOption) {
+    Vote vote = new Vote(userId, poll, selectedOption);
+    poll.addVote(userId, vote);
   }
 
   // Delete a poll
-  public void deletePoll(Long pollId) {
+  public void deletePoll(String pollId) {
     pollManager.getAllPolls().remove(pollId);
   }
 }

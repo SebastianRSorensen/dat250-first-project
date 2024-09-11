@@ -27,6 +27,11 @@ public class UserService {
     return pollManager.getUser(username);
   }
 
+  // Method to retrieve a specific user by ID
+  public User getUserById(String id) {
+    return pollManager.getUserById(id);
+  }
+
   // Method to add a user
   public boolean addUser(User user) {
     return pollManager.addUser(user);
