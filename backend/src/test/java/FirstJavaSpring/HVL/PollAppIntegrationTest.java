@@ -17,8 +17,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -55,7 +57,7 @@ public class PollAppIntegrationTest {
     // Create another user
     User user2 = new User();
     user2.setUsername("Vilde");
-    user2.setEmail("vil@example.com");
+    user2.setEmail("vilde@example.com");
     ResponseEntity<User> user2Response = restTemplate.postForEntity(
       baseUrl() + "/users",
       user2,
@@ -70,7 +72,7 @@ public class PollAppIntegrationTest {
 
     // User 1 creates a new poll using PollRequest
     PollRequest pollRequest = new PollRequest();
-    pollRequest.setCreator(user1.getUsername());
+    pollRequest.setCreator(user1.getId());
     pollRequest.setQuestion("What is your favorite color?");
     Set<VoteOption> options = new HashSet<>();
     VoteOption option1 = new VoteOption(1, "Red");
@@ -85,8 +87,8 @@ public class PollAppIntegrationTest {
       Poll.class
     );
     assertEquals(HttpStatus.CREATED, pollResponse.getStatusCode());
-    Poll poll = pollResponse.getBody();
 
+    Poll poll = pollResponse.getBody();
     // List polls (should show the new poll)
     ResponseEntity<Poll[]> pollsResponse = restTemplate.getForEntity(
       baseUrl() + "/polls",
@@ -95,10 +97,7 @@ public class PollAppIntegrationTest {
     assertEquals(1, pollsResponse.getBody().length);
 
     // User 2 casts a vote
-    VoteRequest voteRequest = new VoteRequest();
-    voteRequest.setUsername(user2.getUsername());
-    voteRequest.setSelectedOption(option2);
-
+    VoteRequest voteRequest = new VoteRequest(user2.getId(), option2);
     ResponseEntity<String> voteResponse = restTemplate.postForEntity(
       baseUrl() + "/polls/" + poll.getPollId(),
       voteRequest,
@@ -120,14 +119,21 @@ public class PollAppIntegrationTest {
       baseUrl() + "/votes",
       Vote[].class
     );
-    assertEquals(1, votesResponse.getBody().length); // Ensure the vote count is consistent
+    assertEquals(1, votesResponse.getBody().length);
 
     // Delete the poll with User 1 (creator)
-    UserRequest deleteRequestUser1 = new UserRequest(user1.getUsername());
+    UserRequest userRequest = new UserRequest(user1.getId());
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    HttpEntity<UserRequest> requestEntity = new HttpEntity<>(
+      userRequest,
+      headers
+    );
+
     ResponseEntity<String> deleteResponse = restTemplate.exchange(
       baseUrl() + "/polls/" + poll.getPollId(),
       HttpMethod.DELETE,
-      new HttpEntity<>(deleteRequestUser1),
+      requestEntity,
       String.class
     );
     assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());

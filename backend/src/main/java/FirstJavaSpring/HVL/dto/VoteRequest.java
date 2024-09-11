@@ -4,16 +4,23 @@ import FirstJavaSpring.HVL.Polls.*;
 
 public class VoteRequest {
 
-  private String username;
+  private String userId;
   private VoteOption selectedOption;
 
-  // Getters and setters
-  public String getUsername() {
-    return username;
+  public VoteRequest() {}
+
+  public VoteRequest(String userId, VoteOption selectedOption) {
+    this.userId = userId;
+    this.selectedOption = selectedOption;
   }
 
-  public void setUsername(String username) {
-    this.username = username;
+  // Getters and setters
+  public String getUserId() {
+    return userId;
+  }
+
+  public void setUserId(String userId) {
+    this.userId = userId;
   }
 
   public VoteOption getSelectedOption() {

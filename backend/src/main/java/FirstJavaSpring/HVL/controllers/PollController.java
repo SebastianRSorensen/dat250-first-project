@@ -27,10 +27,9 @@ public class PollController {
   // Endpoint to create a poll
   @PostMapping
   public ResponseEntity<?> createPoll(@RequestBody PollRequest pollRequest) {
-    String creatorUsername = pollRequest.getCreator();
-
-    // Check if the creator exists in the UserService
-    User existingUser = userService.getUserByUsername(creatorUsername);
+    String creatorId = pollRequest.getCreator();
+    // Check if the creator exists
+    User existingUser = userService.getUserById(creatorId);
     if (existingUser == null) {
       return new ResponseEntity<>(
         "User does not exist, poll creation failed",
@@ -40,7 +39,7 @@ public class PollController {
 
     // Proceed with poll creation if the user exists
     Set<VoteOption> options = pollRequest.getOptions();
-    Poll poll = new Poll(pollRequest.getQuestion(), options, existingUser);
+    Poll poll = new Poll(pollRequest.getQuestion(), options, creatorId);
     existingUser.addPoll(poll); // Add poll to the user's polls list
     pollService.addPoll(poll); // Add poll to the global poll list
 
@@ -50,15 +49,15 @@ public class PollController {
   // Endpoint to cast a vote
   @PostMapping("/{pollId}")
   public ResponseEntity<?> castVote(
-    @PathVariable("pollId") Long pollId,
+    @PathVariable("pollId") String pollId,
     @RequestBody VoteRequest voteRequest
   ) {
-    String voterUsername = voteRequest.getUsername();
+    String voterId = voteRequest.getUserId();
     // Check if voter exists in UserService
-    User voter = userService.getUserByUsername(voterUsername);
+    User voter = userService.getUserById(voterId);
     if (voter == null) {
       return new ResponseEntity<>(
-        "Voter with username (" + voterUsername + ") does not exist",
+        "Voter with voter id (" + voterId + ") does not exist",
         HttpStatus.BAD_REQUEST
       );
     }
@@ -69,7 +68,7 @@ public class PollController {
     }
 
     VoteOption selectedOption = voteRequest.getSelectedOption();
-    pollService.castVote(voter.getUsername(), poll, selectedOption);
+    pollService.castVote(voter.getId(), poll, selectedOption);
 
     return new ResponseEntity<>(voteRequest, HttpStatus.OK);
   }
@@ -84,8 +83,8 @@ public class PollController {
   // Endpoint to delete a poll (Only the creator can delete)
   @DeleteMapping("/{pollId}")
   public ResponseEntity<String> deletePoll(
-    @PathVariable("pollId") Long pollId,
-    @RequestBody UserRequest userRequest
+    @PathVariable("pollId") String pollId,
+    @RequestBody UserRequest user
   ) {
     // Find the poll by ID
     Poll poll = pollService.findPollById(pollId);
@@ -94,7 +93,7 @@ public class PollController {
     }
 
     // Check if the user trying to delete is the creator
-    if (!poll.getCreator().getUsername().equals(userRequest.getUsername())) {
+    if (!poll.getCreator().equals(user.getUserId())) {
       return new ResponseEntity<>(
         "Only the creator of the poll can delete it",
         HttpStatus.FORBIDDEN

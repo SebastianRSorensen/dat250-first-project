@@ -2,21 +2,16 @@ package FirstJavaSpring.HVL.dto;
 
 public class UserRequest {
 
-  private String username;
+  private String userId;
 
   // Constructors
   public UserRequest() {}
 
-  public UserRequest(String username) {
-    this.username = username;
+  public UserRequest(String userId) {
+    this.userId = userId;
   }
 
-  // Getter and Setter
-  public String getUsername() {
-    return username;
-  }
-
-  public void setUsername(String username) {
-    this.username = username;
+  public String getUserId() {
+    return userId;
   }
 }
