@@ -11,29 +11,61 @@ import { PlusCircle, X } from "lucide-react";
 import { Label } from "./manual-install/label";
 import { Input } from "./manual-install/input";
 import { Button } from "./manual-install/button";
+import { useMutation } from "@tanstack/react-query";
+import { PollOptionCreate } from "../interfaces";
+import { createPoll } from "../services";
 
 export function CreatePoll() {
   const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState<string[]>(["", ""]);
+  const [userId, setUserId] = useState("");
+  const [options, setOptions] = useState<PollOptionCreate[]>([
+    { presentationOrder: 1, caption: "" },
+    { presentationOrder: 2, caption: "" },
+  ]);
   const [error, setError] = useState<string | null>(null);
 
   const handleAddOption = () => {
-    setOptions([...options, ""]);
+    const newOption = {
+      id: (options.length + 1).toString(), // Simple ID generation, consider using a more robust method in production
+      presentationOrder: options.length + 1,
+      caption: "",
+    };
+    setOptions([...options, newOption]);
   };
 
   const handleRemoveOption = (index: number) => {
-    setOptions(options.filter((_, i) => i !== index));
+    const updatedOptions = options
+      .filter((_, i) => i !== index)
+      .map((option, idx) => ({
+        ...option,
+        presentationOrder: idx + 1, // Update the presentation order after removing an item
+      }));
+    setOptions(updatedOptions);
   };
 
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
-    newOptions[index] = value;
+    newOptions[index] = { ...newOptions[index], caption: value };
     setOptions(newOptions);
   };
 
+  const useCreatePoll = useMutation({
+    mutationFn: async (data: {
+      creator: string;
+      question: string;
+      options: PollOptionCreate[];
+    }) => createPoll(data.creator, data.question, data.options),
+    onSuccess: (res) => {
+      console.log(res);
+    },
+    onError: (err) => {
+      console.log(err);
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!question || options.some((option) => !option)) {
+    if (!question || !userId || options.some((option) => !option)) {
       setError("Please fill in all fields");
       return;
     }
@@ -41,12 +73,16 @@ export function CreatePoll() {
       setError("Please add at least two options");
       return;
     }
-    // Here you would typically send the data to your backend
     console.log("Poll created:", { question, options });
+    useCreatePoll.mutate({ creator: userId, question, options });
     setError(null);
     // Reset form
     setQuestion("");
-    setOptions(["", ""]);
+    setUserId("");
+    setOptions([
+      { presentationOrder: 1, caption: "" },
+      { presentationOrder: 2, caption: "" },
+    ]);
   };
 
   return (
@@ -66,11 +102,28 @@ export function CreatePoll() {
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="question">
+              UserID
+              <span className="text-gray-300">
+                (This should be removed later)
+              </span>
+            </Label>
+            <Input
+              id="userId"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="Enter your user ID"
+            />
+          </div>
+          <div className="space-y-2">
             <Label>Options</Label>
             {options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
+              <div
+                key={`${option.caption}-${index}`}
+                className="flex items-center space-x-2"
+              >
                 <Input
-                  value={option}
+                  value={option.caption}
                   onChange={(e) => handleOptionChange(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
                 />
@@ -86,6 +139,7 @@ export function CreatePoll() {
                 )}
               </div>
             ))}
+
             <Button
               type="button"
               variant="outline"

@@ -1,5 +1,5 @@
-import { getUsers } from "../services";
-import { useQuery } from "@tanstack/react-query";
+import { createUser } from "../services";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import {
   Card,
@@ -13,16 +13,20 @@ import { Button } from "./manual-install/button";
 import { Label } from "./manual-install/label";
 
 export function CreateUser() {
-  if (false) {
-    const { data, isLoading, isError, isSuccess } = useQuery({
-      queryKey: ["users"],
-      queryFn: getUsers,
-    });
-  }
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const usePostData = useMutation({
+    mutationFn: async (data: { username: string; email: string }) =>
+      createUser(data.username, data.email),
+    onSuccess: (res) => {
+      console.log(res);
+    },
+    onError: (err) => {
+      console.log(err);
+    },
+  });
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !email) {
@@ -34,7 +38,7 @@ export function CreateUser() {
       return;
     }
     // Here you would typically send the data to your backend
-    console.log("User created:", { username, email });
+    usePostData.mutate({ username, email });
     setError(null);
     // Reset form
     setUsername("");

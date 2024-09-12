@@ -1,4 +1,5 @@
 export type User = {
+  id: string;
   username: string;
   email: string;
   polls: Poll[];
@@ -6,27 +7,39 @@ export type User = {
 
 export type Users = User[];
 
-type PollOption = {
+export type PollOption = {
+  voteOptionId: string;
   presentationOrder: number;
   caption: string;
+  votes: number;
 };
 
-type VoteDetail = {
+export type PollOptionCreate = {
+  caption: string;
+  presentationOrder: number;
+};
+
+export type PollOptions = PollOption[];
+
+export type VoteDetail = {
+  voteId: string;
   voter: string;
   selectedOption: PollOption;
   voteTime: string;
 };
 
-type PollVotes = {
-  [voterName: string]: VoteDetail;
+export type PollVotes = {
+  [voterId: string]: VoteDetail;
 };
 
-type Poll = {
-  pollId: number;
+export type Poll = {
+  pollId: string;
   question: string;
   options: PollOption[];
-  creator: string;
+  creatorId: string;
   votes: PollVotes;
   createdAt: string;
   closesAt: string;
 };
+
+export type Polls = Poll[];
