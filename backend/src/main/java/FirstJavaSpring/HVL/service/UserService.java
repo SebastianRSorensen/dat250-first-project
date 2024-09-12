@@ -13,6 +13,16 @@ public class UserService {
   @Autowired
   private PollManager pollManager;
 
+  // Method to see if a user exists by ID
+  public boolean userExistsWithId(String userId) {
+    return pollManager.userExistsWithId(userId);
+  }
+
+  // Method to see if a user exists by username
+  public boolean userExistsWithUsername(String username) {
+    return pollManager.userExistsWithUsername(username);
+  }
+
   // Method to retrieve all users
   public List<User> getAllUsers() {
     return pollManager

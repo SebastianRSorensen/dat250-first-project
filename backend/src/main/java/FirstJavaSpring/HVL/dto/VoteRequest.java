@@ -1,17 +1,17 @@
 package FirstJavaSpring.HVL.dto;
 
-import FirstJavaSpring.HVL.Polls.*;
-
 public class VoteRequest {
 
   private String userId;
-  private VoteOption selectedOption;
+  private String selectedOption;
+  private boolean isUpVote;
 
   public VoteRequest() {}
 
-  public VoteRequest(String userId, VoteOption selectedOption) {
+  public VoteRequest(String userId, String selectedOption, boolean isUpVote) {
     this.userId = userId;
     this.selectedOption = selectedOption;
+    this.isUpVote = isUpVote;
   }
 
   // Getters and setters
@@ -23,11 +23,15 @@ public class VoteRequest {
     this.userId = userId;
   }
 
-  public VoteOption getSelectedOption() {
+  public String getSelectedOption() {
     return selectedOption;
   }
 
-  public void setSelectedOption(VoteOption selectedOption) {
+  public void setSelectedOption(String selectedOption) {
     this.selectedOption = selectedOption;
+  }
+
+  public boolean getIsUpVote() {
+    return isUpVote;
   }
 }

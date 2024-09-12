@@ -6,8 +6,8 @@ import FirstJavaSpring.HVL.dto.UserRequest;
 import FirstJavaSpring.HVL.dto.VoteRequest;
 import FirstJavaSpring.HVL.service.PollService;
 import FirstJavaSpring.HVL.service.UserService;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,10 +38,14 @@ public class PollController {
     }
 
     // Proceed with poll creation if the user exists
-    Set<VoteOption> options = pollRequest.getOptions();
+    HashMap<String, VoteOption> options = new HashMap<>();
+    for (VoteOption voteOption : pollRequest.getOptions()) {
+      options.put(voteOption.getVoteOptionId(), voteOption);
+    }
+
     Poll poll = new Poll(pollRequest.getQuestion(), options, creatorId);
-    existingUser.addPoll(poll); // Add poll to the user's polls list
     pollService.addPoll(poll); // Add poll to the global poll list
+    existingUser.addPoll(poll); // Add poll to the user's polls list TODO: Reffer to the polls array using poll id instead
 
     return new ResponseEntity<Poll>(poll, HttpStatus.CREATED);
   }
@@ -53,9 +57,9 @@ public class PollController {
     @RequestBody VoteRequest voteRequest
   ) {
     String voterId = voteRequest.getUserId();
-    // Check if voter exists in UserService
-    User voter = userService.getUserById(voterId);
-    if (voter == null) {
+
+    boolean userExists = userService.userExistsWithId(voterId);
+    if (!userExists) {
       return new ResponseEntity<>(
         "Voter with voter id (" + voterId + ") does not exist",
         HttpStatus.BAD_REQUEST
@@ -67,8 +71,25 @@ public class PollController {
       return new ResponseEntity<>("Poll not found!", HttpStatus.NOT_FOUND);
     }
 
-    VoteOption selectedOption = voteRequest.getSelectedOption();
-    pollService.castVote(voter.getId(), poll, selectedOption);
+    String selectedOption = voteRequest.getSelectedOption();
+    if (selectedOption == null) {
+      return new ResponseEntity<>(
+        "Selected option is required to cast a vote",
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    if (!pollService.pollHasOption(pollId, selectedOption)) {
+      return new ResponseEntity<>(
+        "Selected option ( " + selectedOption + " ) does not exist in the poll",
+        HttpStatus.NOT_FOUND
+      );
+    }
+    pollService.castVote(
+      voterId,
+      pollId,
+      selectedOption,
+      voteRequest.getIsUpVote()
+    );
 
     return new ResponseEntity<>(voteRequest, HttpStatus.OK);
   }

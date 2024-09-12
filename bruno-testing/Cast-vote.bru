@@ -5,17 +5,15 @@ meta {
 }
 
 post {
-  url: http://localhost:8080/polls/1
+  url: http://localhost:8080/polls/17e9fd9e-00b4-4a6b-bda3-ec46167210f5
   body: json
   auth: none
 }
 
 body:json {
   {
-    "username": "Vilde",
-    "selectedOption": {
-      "presentationOrder": 1,
-      "caption": "Java"
-    }
+    "userId": "f30562f7-7e8e-4791-809b-cd537f8819a0",
+    "selectedOption": "e7d5daa7-6e08-4623-acf9-9180a5942d9b",
+    "isUpVote": true
   }
 }

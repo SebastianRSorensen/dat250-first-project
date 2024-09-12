@@ -32,13 +32,40 @@ public class PollService {
     return pollManager.getPollById(pollId);
   }
 
-  public void castVote(String userId, Poll poll, VoteOption selectedOption) {
-    Vote vote = new Vote(userId, poll, selectedOption);
+  public void castVote(
+    String userId,
+    String pollId,
+    String selectedOption,
+    boolean isUpVote
+  ) {
+    Vote vote = new Vote(userId, pollId, selectedOption, isUpVote);
+    Poll poll = pollManager.getPollById(pollId);
+
+    if (poll.hasVoted(userId)) {
+      return;
+    }
+
     poll.addVote(userId, vote);
+    VoteOption voteOption = pollManager.getPollOption(pollId, selectedOption);
+    if (isUpVote) {
+      voteOption.incrementVoteCount();
+    } else {
+      voteOption.decrementVoteCount();
+    }
   }
 
   // Delete a poll
   public void deletePoll(String pollId) {
     pollManager.getAllPolls().remove(pollId);
+  }
+
+  // Poll has option
+  public boolean pollHasOption(String pollId, String optionId) {
+    return pollManager.pollHasOption(pollId, optionId);
+  }
+
+  // Return poll option of specific poll option ID
+  public VoteOption getPollOption(String pollId, String optionId) {
+    return pollManager.getPollOption(pollId, optionId);
   }
 }

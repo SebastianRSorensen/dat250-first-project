@@ -3,6 +3,7 @@ package FirstJavaSpring.HVL;
 import FirstJavaSpring.HVL.Polls.Poll;
 import FirstJavaSpring.HVL.Polls.User;
 import FirstJavaSpring.HVL.Polls.Vote;
+import FirstJavaSpring.HVL.Polls.VoteOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,8 +13,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class PollManager {
 
-  private final Map<String, User> users = new HashMap<>();
   private final Map<String, Poll> polls = new HashMap<>();
+  private final Map<String, User> users = new HashMap<>();
   private final Map<String, String> usernameToIdMap = new HashMap<>();
 
   // Add a user to the manager
@@ -71,5 +72,31 @@ public class PollManager {
   // Remove a poll by ID
   public void removePoll(String pollId) {
     polls.remove(pollId);
+  }
+
+  // Check if user exists by ID
+  public boolean userExistsWithId(String userId) {
+    return users.containsKey(userId);
+  }
+
+  // Check if user exists by username
+  public boolean userExistsWithUsername(String username) {
+    return usernameToIdMap.containsKey(username);
+  }
+
+  // Poll has vote option
+  public boolean pollHasOption(String pollId, String optionId) {
+    Poll poll = polls.get(pollId);
+    return poll.hasOption(optionId);
+  }
+
+  public VoteOption getPollOption(String pollId, String optionId) {
+    Poll poll = this.polls.get(pollId);
+    if (poll == null) {
+      throw new IllegalArgumentException(
+        "Poll with ID " + pollId + " does not exist"
+      );
+    }
+    return poll.getVoteOptionById(optionId);
   }
 }

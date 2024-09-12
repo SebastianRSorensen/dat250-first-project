@@ -78,12 +78,12 @@ public class Polls {
 
     private final String pollId = UUID.randomUUID().toString();
     private String question;
-    private Set<VoteOption> options;
 
-    @JsonIdentityReference(alwaysAsId = true) // Only serialize the creator's ID
+    private Map<String, VoteOption> options = new HashMap<>();
+
+    @JsonIdentityReference(alwaysAsId = true)
     private String creatorId;
 
-    @JsonManagedReference // Manage votes reference in Poll
     private Map<String, Vote> votes = new HashMap<>();
 
     private final Instant createdAt = Instant.now();
@@ -91,13 +91,16 @@ public class Polls {
 
     // Default constructor (required for deserialization)
     public Poll() {
-      this.options = new HashSet<>();
       this.closesAt = Instant.now().plusSeconds(60 * 60 * 24); // Default to 24 hours
     }
 
-    public Poll(String question, Set<VoteOption> options, String creatorId) {
+    public Poll(
+      String question,
+      HashMap<String, VoteOption> options,
+      String creatorId
+    ) {
       this.question = question;
-      this.options = (options != null) ? options : new HashSet<>();
+      this.options = options;
       this.creatorId = creatorId;
       this.closesAt = Instant.now().plusSeconds(60 * 60 * 24); // Default to 24 hours
     }
@@ -106,12 +109,12 @@ public class Polls {
     // TODO: Implement the functionality to set a custom closing time
     public Poll(
       String question,
-      Set<VoteOption> options,
+      HashMap<String, VoteOption> options,
       String creatorId,
       Instant closesAt
     ) {
       this.question = question;
-      this.options = (options != null) ? options : new HashSet<>();
+      this.options = options;
       this.creatorId = creatorId;
       this.closesAt = closesAt;
     }
@@ -140,16 +143,16 @@ public class Polls {
       this.question = question;
     }
 
-    public Set<VoteOption> getOptions() {
+    public Map<String, VoteOption> getOptions() {
       return options;
     }
 
-    public void setOptions(Set<VoteOption> options) {
+    public void setOptions(HashMap<String, VoteOption> options) {
       this.options = options;
     }
 
     public void addOption(VoteOption option) {
-      this.options.add(option);
+      this.options.put(option.getVoteOptionId(), option);
     }
 
     public String getCreator() {
@@ -173,14 +176,27 @@ public class Polls {
     public boolean hasVoted(String voter) {
       return this.votes.containsKey(voter); // Check if the user has already voted
     }
+
+    public VoteOption getVoteOptionById(String optionId) {
+      return this.options.get(optionId);
+    }
+
+    public boolean hasOption(String optionId) {
+      return this.options.containsKey(optionId);
+    }
   }
 
+  @JsonIdentityInfo(
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "voteOptionId"
+  )
   public static class VoteOption {
 
-    private final String id = UUID.randomUUID().toString();
+    private final String voteOptionId = UUID.randomUUID().toString();
     private int presentationOrder;
 
     private String caption;
+    private Integer voteCount = 0;
 
     public VoteOption(int presentationOrder, String caption) {
       this.presentationOrder = presentationOrder;
@@ -190,7 +206,7 @@ public class Polls {
     public VoteOption() {}
 
     public String getVoteOptionId() {
-      return id;
+      return voteOptionId;
     }
 
     public int getPresentationOrder() {
@@ -208,27 +224,50 @@ public class Polls {
     public void setCaption(String caption) {
       this.caption = caption;
     }
+
+    public Integer getVoteCount() {
+      return voteCount;
+    }
+
+    public void incrementVoteCount() {
+      this.voteCount++;
+    }
+
+    public void decrementVoteCount() {
+      this.voteCount--;
+    }
   }
 
+  @JsonIdentityInfo(
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "voteId"
+  )
   public static class Vote {
 
     private String voter;
 
-    @JsonBackReference // Prevent infinite recursion between Poll and Vote
-    private Poll poll;
+    @JsonIdentityReference(alwaysAsId = true)
+    private String pollId;
 
     private final String voteId = UUID.randomUUID().toString();
-    private VoteOption selectedOption;
+    private String selectedOption;
     private Instant voteTime;
+    private boolean isUpVote;
 
     // Default constructor (required for deserialization)
     public Vote() {}
 
-    public Vote(String voter, Poll poll, VoteOption selectedOption) {
+    public Vote(
+      String voter,
+      String pollId,
+      String selectedOption,
+      boolean isUpVote
+    ) {
       this.voter = voter;
-      this.poll = poll;
+      this.pollId = pollId;
       this.selectedOption = selectedOption;
       this.voteTime = Instant.now(); // Record the time the vote was cast
+      this.isUpVote = isUpVote;
     }
 
     public String getVoteId() {
@@ -239,19 +278,19 @@ public class Polls {
       return voter;
     }
 
-    public Poll getPoll() {
-      return poll;
+    public String getPoll() {
+      return pollId;
     }
 
-    public void setPoll(Poll poll) {
-      this.poll = poll;
+    public void setPoll(String pollId) {
+      this.pollId = pollId;
     }
 
-    public VoteOption getSelectedOption() {
+    public String getSelectedOption() {
       return selectedOption;
     }
 
-    public void setSelectedOption(VoteOption selectedOption) {
+    public void setSelectedOption(String selectedOption) {
       this.selectedOption = selectedOption;
     }
 
@@ -261,6 +300,10 @@ public class Polls {
 
     public void setVoteTime(Instant voteTime) {
       this.voteTime = voteTime;
+    }
+
+    public boolean getIsUpVote() {
+      return isUpVote;
     }
   }
 }

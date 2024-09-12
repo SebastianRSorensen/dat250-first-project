@@ -9,6 +9,7 @@ import FirstJavaSpring.HVL.Polls.VoteOption;
 import FirstJavaSpring.HVL.dto.PollRequest;
 import FirstJavaSpring.HVL.dto.UserRequest;
 import FirstJavaSpring.HVL.dto.VoteRequest;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -74,11 +75,9 @@ public class PollAppIntegrationTest {
     PollRequest pollRequest = new PollRequest();
     pollRequest.setCreator(user1.getId());
     pollRequest.setQuestion("What is your favorite color?");
-    Set<VoteOption> options = new HashSet<>();
     VoteOption option1 = new VoteOption(1, "Red");
-    options.add(option1);
     VoteOption option2 = new VoteOption(2, "Blue");
-    options.add(option2);
+    Set<VoteOption> options = new HashSet<>(Arrays.asList(option1, option2));
     pollRequest.setOptions(options);
 
     ResponseEntity<Poll> pollResponse = restTemplate.postForEntity(
@@ -87,7 +86,6 @@ public class PollAppIntegrationTest {
       Poll.class
     );
     assertEquals(HttpStatus.CREATED, pollResponse.getStatusCode());
-
     Poll poll = pollResponse.getBody();
     // List polls (should show the new poll)
     ResponseEntity<Poll[]> pollsResponse = restTemplate.getForEntity(
@@ -97,19 +95,28 @@ public class PollAppIntegrationTest {
     assertEquals(1, pollsResponse.getBody().length);
 
     // User 2 casts a vote
-    VoteRequest voteRequest = new VoteRequest(user2.getId(), option2);
+    VoteRequest voteRequest = new VoteRequest(
+      user2.getId(),
+      option2.getVoteOptionId(),
+      true
+    );
     ResponseEntity<String> voteResponse = restTemplate.postForEntity(
       baseUrl() + "/polls/" + poll.getPollId(),
       voteRequest,
       String.class
     );
+
     assertEquals(HttpStatus.OK, voteResponse.getStatusCode());
 
     // User 2 changes the vote
-    voteRequest.setSelectedOption(option1); // Change the vote to option "Red"
+    VoteRequest voteRequest2 = new VoteRequest(
+      user2.getId(),
+      option1.getVoteOptionId(),
+      true
+    ); // Change the vote to option "Red"
     ResponseEntity<String> voteChangeResponse = restTemplate.postForEntity(
       baseUrl() + "/polls/" + poll.getPollId(),
-      voteRequest,
+      voteRequest2,
       String.class
     );
     assertEquals(HttpStatus.OK, voteChangeResponse.getStatusCode());
