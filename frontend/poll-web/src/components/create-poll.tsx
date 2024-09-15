@@ -11,11 +11,12 @@ import { PlusCircle, X } from "lucide-react";
 import { Label } from "./manual-install/label";
 import { Input } from "./manual-install/input";
 import { Button } from "./manual-install/button";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { PollOptionCreate } from "../interfaces";
 import { createPoll } from "../services";
 
 export function CreatePoll() {
+  const queryClient = useQueryClient();
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState<PollOptionCreate[]>([
     { presentationOrder: 1, caption: "" },
@@ -54,6 +55,7 @@ export function CreatePoll() {
       options: PollOptionCreate[];
     }) => createPoll(data.question, data.options),
     onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
       console.log(res);
     },
     onError: (err) => {
