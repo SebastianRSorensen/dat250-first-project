@@ -22,9 +22,8 @@ export function App() {
     <PageWrapper>
       <CreateUser />
       <CreatePoll />
-      {polls?.map((poll) => (
-        // <div>{poll.question}</div>
-        <Poll poll={poll} />
+      {polls?.map((poll, index) => (
+        <Poll poll={poll} key={`${poll.question}-${index}`} />
       ))}
     </PageWrapper>
   );

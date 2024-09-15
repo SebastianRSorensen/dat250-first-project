@@ -9,18 +9,16 @@ export function PollOption({
   option,
   isVoted,
   pollId,
-  userId,
 }: {
   option: PollOption;
   isVoted: boolean;
   pollId: string;
-  userId: string;
 }) {
-  const { voteOptionId, caption, votes } = option ?? {};
+  const { voteOptionId, caption, voteCount } = option ?? {};
 
   const vote = useMutation({
     mutationFn: async (data: { isUpVote: boolean }) =>
-      castVote(userId, pollId, voteOptionId, data.isUpVote),
+      castVote(pollId, voteOptionId, data.isUpVote),
     onSuccess: (res) => {
       console.log(res);
     },
@@ -35,7 +33,7 @@ export function PollOption({
       <span className="flex flex-row items-center space-x-5">
         <span>
           {isVoted && <CheckCircle2 className="mr-2 h-4 w-4" />}
-          {`${votes} votes`}
+          {`${voteCount} votes`}
         </span>
         <Button
           key={option.voteOptionId}

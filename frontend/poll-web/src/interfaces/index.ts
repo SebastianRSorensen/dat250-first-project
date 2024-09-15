@@ -11,7 +11,7 @@ export type PollOption = {
   voteOptionId: string;
   presentationOrder: number;
   caption: string;
-  votes: number;
+  voteCount: number;
 };
 
 export type PollOptionCreate = {

@@ -17,7 +17,6 @@ import { createPoll } from "../services";
 
 export function CreatePoll() {
   const [question, setQuestion] = useState("");
-  const [userId, setUserId] = useState("");
   const [options, setOptions] = useState<PollOptionCreate[]>([
     { presentationOrder: 1, caption: "" },
     { presentationOrder: 2, caption: "" },
@@ -51,10 +50,9 @@ export function CreatePoll() {
 
   const useCreatePoll = useMutation({
     mutationFn: async (data: {
-      creator: string;
       question: string;
       options: PollOptionCreate[];
-    }) => createPoll(data.creator, data.question, data.options),
+    }) => createPoll(data.question, data.options),
     onSuccess: (res) => {
       console.log(res);
     },
@@ -65,7 +63,7 @@ export function CreatePoll() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!question || !userId || options.some((option) => !option)) {
+    if (!question || options.some((option) => !option)) {
       setError("Please fill in all fields");
       return;
     }
@@ -73,12 +71,11 @@ export function CreatePoll() {
       setError("Please add at least two options");
       return;
     }
+    useCreatePoll.mutate({ question, options });
     console.log("Poll created:", { question, options });
-    useCreatePoll.mutate({ creator: userId, question, options });
     setError(null);
     // Reset form
     setQuestion("");
-    setUserId("");
     setOptions([
       { presentationOrder: 1, caption: "" },
       { presentationOrder: 2, caption: "" },
@@ -99,20 +96,6 @@ export function CreatePoll() {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Enter your poll question"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="question">
-              UserID
-              <span className="text-gray-300">
-                (This should be removed later)
-              </span>
-            </Label>
-            <Input
-              id="userId"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="Enter your user ID"
             />
           </div>
           <div className="space-y-2">
