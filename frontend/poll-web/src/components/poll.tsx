@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-import { Button } from "./manual-install/button";
 import {
   Card,
   CardContent,
@@ -25,7 +23,6 @@ export function Poll({ poll }: { poll: PollType }) {
             option={option}
             isVoted={false}
             pollId={poll.pollId}
-            userId={"82e76674-04ca-49e9-b451-6299fe5d5f9b"}
           />
         ))}
         <p className="text-sm text-muted-foreground text-center">
