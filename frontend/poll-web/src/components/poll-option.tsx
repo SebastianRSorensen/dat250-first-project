@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PollOption } from "../interfaces";
 import { Button } from "./manual-install/button";
 import { CheckCircle2 } from "lucide-react";
@@ -14,12 +14,14 @@ export function PollOption({
   isVoted: boolean;
   pollId: string;
 }) {
+  const queryClient = useQueryClient();
   const { voteOptionId, caption, voteCount } = option ?? {};
 
   const vote = useMutation({
     mutationFn: async (data: { isUpVote: boolean }) =>
       castVote(pollId, voteOptionId, data.isUpVote),
     onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["userData"] });
       console.log(res);
     },
     onError: (err) => {
