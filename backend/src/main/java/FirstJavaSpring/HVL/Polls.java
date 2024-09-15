@@ -9,7 +9,9 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.google.common.collect.Lists;
+import java.lang.reflect.Array;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +30,9 @@ public class Polls {
     private final String id = UUID.randomUUID().toString();
     private String username;
     private String email;
+
+    // Use pollId as the key to store the list of votes cast by the user
+    private Map<String, List<String>> votes = new HashMap<>();
 
     @JsonIgnore // Prevents the map from being serialized/deserialized
     private final Map<String, Poll> polls = new HashMap<>();
@@ -67,6 +72,27 @@ public class Polls {
 
     public void addPoll(Poll poll) {
       this.polls.put(poll.getPollId(), poll);
+    }
+
+    // Get all votes in a list with pollId as key, and the users votes in there cast by the user
+    public Map<String, List<String>> getVotes() {
+      return votes;
+    }
+
+    public void addVote(String pollId, String voteId) {
+      if (votes.containsKey(pollId)) {
+        votes.get(pollId).add(voteId);
+      } else {
+        List<String> voteIds = new ArrayList<>();
+        voteIds.add(voteId);
+        votes.put(pollId, voteIds);
+      }
+    }
+
+    public void removeVote(String pollId, String voteId) {
+      if (votes.containsKey(pollId)) {
+        votes.get(pollId).remove(voteId);
+      }
     }
   }
 

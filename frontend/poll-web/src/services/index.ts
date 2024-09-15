@@ -9,12 +9,14 @@ export function getUserId() {
   return null;
 }
 
-export function getUserInfo() {
-  const user = localStorage.getItem("userData");
-  if (user) {
-    return JSON.parse(user);
+export async function getUserInfo(userId: string) {
+  try {
+    const response = await api.get<User>(`/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get user info:", error);
+    throw error;
   }
-  return null;
 }
 
 export async function getUsers() {

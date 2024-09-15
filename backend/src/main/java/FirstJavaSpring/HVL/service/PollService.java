@@ -41,11 +41,8 @@ public class PollService {
     Vote vote = new Vote(userId, pollId, selectedOption, isUpVote);
     Poll poll = pollManager.getPollById(pollId);
 
-    if (poll.hasVoted(userId)) {
-      return;
-    }
-
     poll.addVote(userId, vote);
+    pollManager.getUser(userId).addVote(pollId, selectedOption);
     VoteOption voteOption = pollManager.getPollOption(pollId, selectedOption);
     if (isUpVote) {
       voteOption.incrementVoteCount();
