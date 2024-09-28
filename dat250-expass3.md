@@ -7,17 +7,17 @@
 
 #### CRUD
 
-_insert_  
+**insert**  
 ![alt text](image-2.png)
 
-_query_  
+**query**  
 ![alt text](image-3.png)
 
-_update_  
+**update**  
 ![alt text](image-4.png)
 
-_delete_  
-![alt text](image-5.png)
+**delete**  
+![alt text](image-5.png)  
 ![alt text](image-6.png)  
 Nothing is found above as its deleted.
 
